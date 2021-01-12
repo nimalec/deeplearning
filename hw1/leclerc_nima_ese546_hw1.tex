@@ -1,0 +1,377 @@
+\title{\textbf{Problem Set 1}}  
+\author{
+	Nima Leclerc (nleclerc@seas.upenn.edu, PennID = nleclerc)  \\
+        \\
+       ESE 546 (Principles of Deep Learning) \\ 
+       School of Engineering and Applied Science \\ University of Pennsylvania \\ 
+       Total time =  
+        }
+\date{\today}
+
+
+\documentclass[12pt]{article}
+\usepackage{graphicx}
+\usepackage{sectsty}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{nccmath}
+\usepackage{bm}
+\usepackage{amssymb}
+\usepackage{color}
+\usepackage{bbm}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{green},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+
+
+\sectionfont{\fontsize{12}{15}\selectfont}
+\setlength{\parindent}{0pt}
+
+ 
+\begin{document}
+\maketitle
+
+
+\textbf{Problem 1}  \newline 
+An SVM solves an optimization problem for maximizing the margin between two classes. Support
+that we have a binary classification problem where $(x_{i} , y_{i})$ are the data and ground-truth labels
+respectively and $y_{i} \in  \{-1,1\}$. We would like to find a hyper-plane that separates the data such that
+all examples with labels $y_{i} = +1$ are on side and all examples with labels $y_{i}$ are on the other
+side. This involves solving the problem 
+\begin{equation} 
+\begin{split} 
+\min_{\theta} \frac{1}{2}  ||\theta||^{2}     \\ 
+ s.t. \;  y_{i}(\theta^{T}x_{i} + \theta_{0}  ) \geq 1 \;  \forall i = 1,\dots,n  
+\end{split}  
+\end{equation} 
+
+with $\theta_{0}$ as the offset parameter and $\theta$ as the hyper-plane.  \newline 
+(a) It may not always be possible to classify a dataset cleanly into positive and negatively
+labeled samples,  we relax the problem formulation. We create a 
+“slack” variable that allows the constraint to be written
+as
+
+$$  y_i (\theta^T x_i + \theta_0 ) > 1 - \zeta_{i}, \zeta_{i} \geq 0  $$
+
+We would like to minimize the violation of the original constraints and the slack variable-based formulation of (1) will
+use a different objective that does so. There can be many such objectives, write down one. \newline  \newline 
+\emph{Solution:} 
+The optimization problem can reformulated into minimizing the loss function, 
+$$  L(\theta)  = \frac{1}{2} ||\theta||_{2}^{2}  + C\sum_{i} \zeta_{i}  $$
+where $\zeta_{i}$ is the slack variable and $C$ is a hyperparameter quantifying the amount of "slack" tolerated. \newline  \newline  
+(b)  Define what are support samples in an SVM. \newline  \newline  
+ \emph{Solution:} 
+ The support samples or support vectors of an SVM are the data points closest to the separating hyperplane in the vicinity of the SVM margin which influence the position and orientation of the hyperplane. \newline   \newline  
+ (c)   You can download the dataset using,  \newline
+\begin{lstlisting}
+from sklearn.datasets import fetch_openml
+from sklearn.model_selection import train_test_split
+ds = fetch_openml("mnist_784")
+x, y = ds.data, ds.target
+x_train, x_val, y_train, y_val = train_test_split(x, y,
+test_size=0.2, random_state=42)
+\end{lstlisting}
+Check whether you have downloaded the data correctly; the images in x train and x val are in the 
+form of a 784 length vector.  Construct training (80\%) and validation (20\%) datasets from the arrays $x$, $y$ by sampling the images and labels randomly. Why did we not construct a test dataset here?
+\newline \newline 
+\emph{Solution:} 
+Refer to the code in the attached Jupyter notebook the training-validation set split. Here, only the validation set is used since we only care about the training accuracy of the SVM. Our goal here is to see how tuning hyperparameters in the SVM model can influence the final error obtained. For this purpose, it is not necessary to use a test set where one would be interested in seeing how the model would perform on a completely new dataset. \newline  \newline  
+
+(d) Create the SVM classifier in scikit-learn using 
+
+\begin{lstlisting}
+classifier = svm.SVC(C=1.0, kernel="rbf", gamma="auto")
+\end{lstlisting}
+What do the parameters C and $\gamma$ do? What are their default values? Fit the SVM classifier to the data and predict the labels of the validation dataset using the trained classifier. Note that the input
+data for an SVM is a vector of 784, not an image of size 28x28. Provide the validation accuracy
+and the 10-class confusion matrix. Note down the ratio of the number of support samples to the
+total number of training samples for your trained classifier.If training takes too long or runs out
+of memory, you can down-sample the original 28x28 images to 14x14 images. \newline   \newline  
+ \emph{Solution:} 
+ The parameter $C$ quantifies the amount of "slack" added to tolerate points in the wrong side of the separating hyperplane. In a sense, $C$ acts as a form of regularization used tolerate misclassification in soft-margin SVMs. $\gamma$ on the other hand is used to parameterize the radial basis function (RBF) kernel. More explicitly, 
+ $$ k(x, x^{\prime})   = \exp(-\gamma ||x -  x^{\prime} ||^{2}) $$  
+$\gamma$ parameterizes the width of the RBF kernel over the input feature space (however, $\gamma$ also parametrizes other kernels including sigmoids and poly). The default value for $C$ in scikit-learn is 1.0 and the default for $\gamma$ is $\gamma = \frac{1}{d\sigma}$ where $d$ is the dimensionality of the feature space and $\sigma$ is the variance in the training data $x$. The training examples from the MNIST dataset are first downsampled from (28,28) pixel images to (14,14) pixel images to speed up training. An SVM with  $\gamma$ set to $\frac{1}{n_{feat}} = \frac{1}{196} $ and $C=10.0$  is trained on the MNIST dataset using a 80:20 training validation split by executing,  
+\begin{lstlisting}
+classifier = svm.SVC(C=1.0, kernel="rbf", gamma="auto")  
+cls_svm = classifier.fit(x_train, y_train) 
+\end{lstlisting}
+After validation, a validation accuracy of 97.49 $\%$  was obtained. The confusion matrix is plotted in Fig. 1. \newline \newline
+  
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\columnwidth]{cm_fig1}
+\caption{Ten class confusion matrix for SVM classifier on MNIST dataset. $C=10$.}\label{visina8}
+\end{figure}
+Among the training points, $n=9930$ were used as support vectors during training.  \newline   \newline 
+(e) Read the manual of svm.SVC carefully. Identify all the options that you may not have
+seen in your previous course on SVMs. Libraries that are used in production such as scikit-learn
+will have numerous knobs to improve the performance; these knobs often implement state of the art
+research and it is useful to know them. For instance, what does the parameter named “shrinking”
+in svm.SVC do? Investigate and explain what optimization algorithm is used to fit the SVM in
+scikit-learn. \newline \newline 
+\emph{Solution:} \newline 
+svm.SVC  has numerous parameters used to improve its performance during classification.  These include 'coef0', 'degree',  and 'shrinking'. 'coef0'  has a default value of 0 and is another parameter added to the 'poly' and 'sigmoid' kernel functions. 'degree' allows one to specify the degree of the polynomial that is being fitted for the decision boundary. 'shrinking' has a default value of TRUE and is  used to diminish the training time if the number of iteration during training is too large. This uses a large stop tolerance. The default setting for svm.SVC is to optimize using the primal formalism, however the dual problem is used if a kernel is specified.  Stochastic gradient descent is typically used during the optimization.  \newline   \newline  
+
+
+(f) The mathematical formulation of the SVM above is for a binary classifier. The MNIST
+dataset consists of digits from 0-9 and has 10 classes in total. How does svm.SVC handle multiple
+classes? Can you think of any alternative ways to use binary classifiers to perform multi-class
+classification?\newline \newline 
+\emph{Solution:} \newline  
+Multiclass classification is handled in svm.SVC by breaking down the classes into multiple binary classification cases. Hence, the same classifier above is implemented $c$ times for $c$ classes. An alternative implementation can use a softmax layer which takes the input from SVM output for each class and determines the probability that the output belongs to class $c$.  \newline  \newline 
+
+
+(g) Use the sklearn.model selection.GridSearchCV function to pick a better value than
+the default one for the hyper-parameter $C$. Try at least 5 different hyper-parameters. Show all the
+hyper-parameters tried by the method and their accuracies.\newline \newline 
+\emph{Solution:} \newline 
+The $C$ hyperparameter is taken to be $C = [0.1, 0.5, 1, 100]$. Table 1 shows the hyperparameter settings for this SVM and corresponding accuracy $\epsilon$ 
+\begin{center}
+ \begin{tabular}{||c c||} 
+ \hline
+ $C$ & $\epsilon$ (\%)  \\ [0.5ex] 
+ \hline  
+ 0.1 & 93.44  \\ 
+ \hline
+ 0.5 & 95.86  \\
+  \hline
+ 1 &  96.60  \\ 
+ \hline
+  10 &  97.31 \\ 
+  \hline
+ 100 & 97.25   \\  [1ex] 
+ \hline
+\end{tabular}
+\end{center}
+
+(h) The following two parts are computationally intensive. Down-sample all images to 14x14
+and create a training dataset using only 5,000 images from the full MNIST dataset. Make
+sure that the training dataset is balanced, i.e., pick 500 images per digit. Similarly, pick an
+additional 5,000 images to form the validation set. The default kernel in svm.SVC is a radial basis function. The MNIST dataset consists of images and since images have local regularities we can build a better classifier by exploiting them. It has been
+found that the mammalian visual cortex consists of cells well-modeled by Gabor functions (named
+after Dennis Gabor, a Hungarian physicist who invented holography). Let us represent each image as
+a function $I(x,y)$, this function gives the intensity at pixel location $(x,y)$. A Gabor filter is given by a function
+$$ g(x,y) = \exp (2\pi i F(x\cos \omega + y\cos \omega)) \exp (-\pi (\frac{p^{2}}{ \sigma_{x}^{2}}  + \frac{q^{2}}{ \sigma_{y}^{2}} )  ) $$
+with $p = x\cos \theta + y\sin \theta$ and $q =  -x\cos \theta + y\sin \theta$. First, note that the filter is a complex function, different from standard  convolutional filters. Convolving the original image $I(x,y)$ with the filter $g(x,y)$ will result in two sets of coefficients, real and imaginary. The other parameters are $F$, the spatial frequency, $\theta$ the rotation angle of the Gaussian, $\sigma_{x},  \sigma_{y}$ the standard deviation of the kernel along the $X$ and $Y$ directions, and the bandwidth .   \newline  \newline 
+\emph{Solution:} 
+\newline 
+
+
+
+\textbf{Problem 2}  \newline  
+Prove Jensen’s inequality: for any random variable $X$ with expectation $\mu$ and a convex, finite function $\phi$ 
+$$ \mathbb{E}_{X} [\phi (X) ] \geq  \phi (\mu)    $$     
+You can assume that the random variable $X$ takes values in a finite set. If you want to prove it in a more general setting, you can assume that the function $\phi$ is differentiable. \newline  \newline  
+\emph{Solution:} 
+\newline  
+We can go on to prove this by induction.  Jensen's inequality can also be written as,   
+$$ \sum_{i=1}^{n}   c_{i} \phi(x_{i}  )    \geq \phi ( \sum_{i=1}^{n}  c_{i} x_{i} )  $$
+
+for $\sum_{i=1}^{n} c_{i} = 1$ with  $c_{i}$  as the probability of selecting the $i$th sample. $x_{i}$ is a point in the domain $X$. Hence, expanding 
+$$ \phi (\sum_{i=1}^{n+1} c_{i} x_{i} )   =  \phi (\sum_{i=1}^{n} c_{i} x_{i}  + c_{n+1} x_{n+1}  )   $$ 
+$$ = \phi(  c_{n+1} x_{n+1} + (1 -c_{n+1})\frac{1 }{1-c_{n+1} }  \sum_{i=1}^{n} c_{i} x_{i}  ) $$ 
+$$ \leq  c_{n+1}  \phi (x_{n+1} )  +  ( 1-  c_{n+1} ) \phi (\frac{1}{1-c_{n+1} } \sum_{i=1}^{n} c_{i} x_{i}  )     $$ 
+$$ = c_{n+1}  \phi (x_{n+1} )  + (1- c_{n+1}  ) \phi( \frac{c_{i} }{ 1-c_{n+1} } x_{i}  )     $$ 
+$$ \leq  c_{n+1}  \phi (x_{n+1} ) + (1- c_{n+1} ) \sum_{i=1}^{n} \frac{c_{i} }{ 1-c_{n+1} } \phi (x_{i} )      $$ 
+$$ =  \sum_{i =1}^{n} c_{i} \phi (x_{i})  + c_{n+1} \phi (x_{n+1})   =  \sum_{i =1}^{n+1} c_{i} \phi (x_{i})  $$
+Hence,  
+$$  \phi (\sum_{i=1}^{n+1} c_{i} x_{i} )   \leq \sum_{i =1}^{n+1} c_{i} \phi (x_{i})  $$ 
+which is also written as,  
+$$ \mathbb{E}_{X} [\phi (X) ] \geq  \phi (\mu)    $$      
+Q.E.D. \newline   \newline  
+\textbf{Problem 3}  \newline 
+The MNIST dataset is used here for training and validation with a feedforward neural network.  \newline  
+(a) The training dataset has 60,000 images while the validation dataset has 10,000 images spread roughly
+equally across 10 classes. Take 50\% of the images from each class for training and validation, i.e.,
+about 30,000 training images and 5,000 validation images, almost evenly spread across all classes
+with a few minor differences. We will use this smaller dataset in this problem. \newline \newline 
+
+
+\emph{Solution:}  \newline 
+Training and validation sets using the MNIST images comprise 30,000 and 5,000 images with roughly the same number of images per class. A few of these images are  depicted in Fig. 2.  
+\newline \newline 
+(b)  We will next implement different parts of a typical neural network. First write a linear
+layer; this includes the forward function
+$$ h^{(l+1)} = Wh^{(l)}   + b $$
+and the corresponding backward function that takes the gradient $\bar{h^{(l+1)} }$ and out puts $\bar{W}$, $\bar{b}$, and $\bar{h^{(l)}}$. Remember to write your function in such a way that it takes in a mini-batch of vectors $h^{(l)}$ as the input
+$$ h^{(l)}  \in \mathbb{R}^{b\times a}$$ 
+use 
+$$W \in  \mathbb{R}^{b\times c}, b \in  \mathbb{R}^{c}$$  
+and output of mini-batch of feature vectors of size $ h^{(l+1)} \in  \mathbb{R}^{b\times c}$
+Note that here, we have that $a=784$ since there are 28x28 pixels in MNIST images and $c=10$.  Use numpy to implement forward and backward pass.   \newline  \newline 
+\emph{Solution:}  \newline  
+Let's refer to the forward layer to the $l=1$ layer with the input as $h^{l=1}$ and output as $h^{l=2}$. For explicitly, the notation $(h_{i}^{l=1} )_{k}$   refers to the input into the $l=1$ layer for the $k$th training example in the minibatch $B$ with feature dimension $i$.  Likewise, we have  $(h_{j}^{l=2} )_{k}$ as the output, with all the same indices as in the first input except for $j$ which refers to the class index. The forward function is given by,  \newline  
+$$ (h_{j}^{l=2} )_{k}  = W_{ji} (h_{i}^{l=1} )_{k} + b_{j} $$
+The backwards functions are given by, 
+$$ \frac{\partial  (h_{j}^{l=2} )_{k} }{\partial   W_{ji} }   =  (h_{i}^{l=1} )_{k}  $$
+$$ \frac{\partial  (h_{j}^{l=2} )_{k} }{\partial   b_{j} }   =   (I_{j })_{k} =  I_{j }  $$
+with $I_{j}$ as the identity for the $j$th element.  We have that $W \in \mathbb{R}^{c\times d} $, $b \in \mathbb{R}^{c\times 1}$,  $h^{l=2} \in  \mathbb{R}^{c\times n}$, and   $h^{l=1} \in  \mathbb{R}^{d\times n}$.  The backwards and forward steps are implemented in Python as shown below, \newline 
+\begin{lstlisting}
+class LayerLinear:
+      def __init__(self, c, d, n, w=None, b=None):
+        self._w = w or np.random.rand(c,d)/np.linalg.norm(np.random.rand(d,c), ord="fro") #cxd
+        self._b = b or np.zeros([c,1]) # cx1 
+        self._hin = np.ones([n,d])  #nxd 
+        self._hout = np.ones([n,c]) #cxn    
+        self._dhout_w = np.zeros([c,n,d]) #cxnxd  
+        self._dhout_b = np.ones([n,c,1]) #cx1 
+     
+      def forward(self, hin):
+        hout =  np.matmul(self._w,hin.T) + self._b #cxn 
+        self._hin, self._hout =  hin, hout  #hin is nxd , hout is cxn
+        return self._hout
+    
+      def backward(self):
+        dw = np.array([self._hin]*self._w.shape[0]) #cxnxd 
+        db = np.ones([self._w.shape[0],1]) #cx1 
+        self._dhout_w, self._dhout_b = dw, db 
+        return (dw, db)
+    
+      def zero_grad(self):
+        self._dhout_w, self._dhout_b= 0*self._dhout_w, 0*self._dhout_b
+   
+\end{lstlisting} 
+
+(c) Implement the rectified linear unit (ReLU) layer next. This will take the form of
+$$ h^{(l+1)}  = \max (0, h^{(l)} )   $$
+where the max is performed element-wise on the elements of $h^{(l)}$.  Write the forward function and the corresponding backward function. \newline   \newline  
+\emph{Solution:}  \newline 
+The ReLU layer is now applied in the $l=2$ layer. The input $h^{l=2}$  into this layer is provided from the $l=1$ linear layer and produces output $ h^{(l=3)}$. This is given by, 
+$$h^{l=3} = \max (0, h^{(l=2)} ) $$
+For $n$ examples, $h^{l=3} \in \mathbb{R}^{c  \times n}$. The element wise forward function is then, 
+$$ (h^{l=3}_{j})_{k} =  \max (0,( h_{j}^{(l=2)} )_{k} )  $$  
+The backwards functions are given by, 
+$$ \frac{\partial (h^{l=3}_{j})_{k}  }{ \partial W_{ji} }  = \frac{\partial (h^{l=3}_{j})_{k}  }{ \partial (h^{l=2}_{j})_{k}}  \frac{\partial  (h_{j}^{l=2} )_{k} }{\partial   W_{ji} }     $$
+$$ \frac{\partial (h^{l=3}_{j})_{k}  }{\partial b_{j} }  =   \frac{\partial (h^{l=3}_{j})_{k}  }{ \partial (h^{l=2}_{j})_{k}}  \frac{\partial (h^{l=3}_{j})_{k}  }{ \partial (h^{l=2}_{j})_{k}} $$
+From the expression, we see that  $ \frac{\partial  (h_{j}^{l=2} )_{k} }{\partial   W_{ji} } $ and $  \frac{\partial (h^{l=3}_{j})_{k}  }{ \partial (h^{l=2}_{j})_{k}}  \frac{\partial (h^{l=3}_{j})_{k}  }{ \partial (h^{l=2}_{j})_{k}} $ are predetermined for the first layer. Hence, we just need $\frac{\partial (h^{l=3}_{j})_{k}  }{ \partial (h^{l=2}_{j})_{k}}$. This is just, 
+$$ \frac{\partial (h^{l=3}_{j})_{k}  }{ \partial (h^{l=2}_{j})_{k}}   =  \mathbbm{1}_{ (h^{l=3}_{j})_{k}   > 0 }   $$
+This is implemented in Python below. 
+
+\begin{lstlisting}
+class LayerReLU:
+      def __init__(self, LinearLayer):
+        self._hin_layer = LinearLayer
+        self._hin = LinearLayer._hout
+        self._hout = None #cxn    
+        self._dhin = None 
+        self._dhout_w = None #nxcxd 
+        self._dhout_b = None #nxc 
+     
+      def forward(self):
+        idx_g0 = self._hin > 0 
+        idx_g0 = idx_g0.astype(int) 
+        self._hout = hout = self._hin*idx_g0
+    
+      def backward(self):
+        idx_g0 = self._hout>0 
+        idx_g0 = idx_g0.astype(int) 
+        self._dhout_hin = idx_g0 
+        dws = [] 
+        for i in range(np.shape(self._hin_layer._dhout_w)[2]): 
+         dw = self._dhout_hin*self._hin_layer._dhout_w[:,:,i] 
+         dws.append(dw) 
+        self._dhout_w = np.array(dws).T #nxcxd
+        self._dhout_b = self._dhout_hin*self._hin_layer._dhout_b 
+        self._dhout_b = self._dhout_b.T
+
+      def zero_grad(self):
+        self._dhout_w, self._dhout_b= 0*self._dhout_w, 0*self._dhout_b
+\end{lstlisting} 
+
+(d) Next we will write a combined softmax and cross-entropy loss layer. This is a layer that first performs the operation
+$$h_{k}^{ (l+1) }    = \frac{ e^{h_{k}^{ (l) } }  }{\sum_{k^{\prime} }  e^{h_{k^{\prime} }^{ (l) }  }}  $$
+where $h_{k}^{ (l) } $ is the $k$th element of the vector $h^{(l)}$. The input to this layer, i.e.  $h^{(l)} $ are called "logits".   The output of this layer is a scalar, it is the negative log-probability of predicting the correct class, i.e.,
+$$l(y) = -\log (h_{y}^{ (l+1) }  )  $$
+where $y$ is the true label of the image. For a minibatch with $n$ images, the average loss is then 
+$$l(\{ y_{i} \} )  = -\frac{1}{ n} \sum_{i=1}^{n}  \log (h_{y_{i} }^{ (l+1) }  ) $$
+\newline  \newline 
+\emph{Solution:}  \newline 
+We have that $h^{ (l=4) }  \in \mathbb{R}^{c \times n}$. In tensor notation, we have 
+$$ (h^{(l=4)}_{j})_{k}  =  \frac{\exp (h^{(l=3)}_{j})_{k}}{\sum_{j= 1}^{c}   \exp (h^{(l=3)}_{j})_{k}}  $$   
+Interested in the derivatives with respect to $W_{ji}$ and $b_{j}$, we get 
+$$ \frac{\partial   (h^{(l=4)}_{j})_{k}}{\partial  W_{ji}}  =  \frac{\partial   (h^{(l=4)}_{j})_{k}}{\partial   (h^{(l=3)}_{j})_{k}} \frac{\partial (h^{l=3}_{j})_{k}  }{ \partial W_{ji} }   $$ 
+Hence, we just need  $ \frac{\partial   (h^{(l=4)}_{m})_{k}}{\partial   (h^{(l=3)}_{n})_{k}} $. Let's break down the two cases for when $m=n$ and $m\neq n$. From this, we get that 
+$$ \frac{\partial   (h^{(l=4)}_{m})_{k}}{\partial   (h^{(l=3)}_{n})_{k}}  =    (h^{(l=3)}_{m})_{k}(\delta_{mn}  -   (h^{(l=3)}_{n})_{k} ) $$
+For the cross-entropy loss, we have a forward step given by
+$$   (h^{(l=5)} )_{k} = -\sum_{j=1}^{c} y_{j} \log [ (h_{j}^{(l=4)} )_{k} ] $$
+The backward step is given by, 
+$$ \frac{\partial   (h^{(l=5)})_{k}}{\partial  W_{ji}} =  \frac{\partial   (h^{(l=5)})_{k} }{\partial  (h^{(l=4)}_{j})_{k} }  \frac{\partial   (h^{(l=4)}_{j})_{k}}{\partial  W_{ji}}  $$
+So, we only need to find 
+$$  \frac{\partial   (h^{(l=5)})_{k} }{\partial  (h^{(l=4)}_{j})_{k} }  = -\sum_{j=1}^{c}  \frac{  (y_{j})_{k}  }{ (h^{(l=4)}_{j})_{k} }   $$ 
+Condensing the layers $l=4$ and  $l=5$, 
+$$  \frac{\partial   (h^{(l=5)})_{k}}{\partial  W_{ji}}  =  -\sum_{j=1}^{c}  \frac{  (y_{j})_{k}  }{ (h^{(l=4)}_{j})_{k} } (h^{(l=4)}_{j})_{k}(\delta_{ij}  -   (h^{(l=4)}_{n})_{k} ) \frac{\partial (h^{l=3}_{j})_{k}  }{ \partial W_{ji} } $$
+$$ =  -\sum_{j=1}^{c}  (y_{j})_{k} (\delta_{ij}  -   (h^{(l=4)}_{n})_{k} ) \frac{\partial (h^{l=4}_{j})_{k}  }{ \partial W_{ji} }   $$
+
+$$ =  \sum_{j=1}^{c}  ((h^{(l=4)}_{j})_{k}  -   (y_{j})_{k}   ) \frac{\partial (h^{l=3}_{j})_{k}  }{ \partial W_{ji} }   $$ 
+So we can write, 
+$$ \frac{\partial  L }{\partial  W_{ji} }  =  \frac{\partial  (h^{(l=5)})_{k}}{\partial  W_{ji}}  = \sum_{j=1}^{c}  ((h^{(l=4)}_{j})_{k}  -   (y_{j})_{k}   ) \frac{\partial (h^{l=3}_{j})_{k}  }{ \partial W_{ji} }    $$
+So, we assign the derivative 
+$$   \frac{\partial  (h^{(l=5)})_{k} }{\partial (h_{j} ^{(l=4)})_{k}  } =  (h^{(l=4)}_{j})_{k}  -   (y_{j})_{k}     $$
+$$ = y_{j})_{k} sftmx((h^{(l=3)}_{j})_{k} )(1 -  sftmx((h^{(l=3)}_{j})_{k} ) )   $$ 
+This is implemented below in Python. 
+
+\begin{lstlisting}
+class softmax_cross_entropy_t:
+    def __init__(self, LayerReLU):
+        self._hin_layer = LayerReLU
+        self._hin = LayerReLU._hout 
+        self._sftmx = None 
+        self._sftmx_av = None 
+        self._hout = None 
+        self._preds = None 
+        self._dhout_w = None       
+        self._dhout_b = None 
+        self._error = None
+        self._y = None 
+    
+    def forward(self, y):
+      n = np.shape(self._hin)[1]   
+      sftmx = self._hin/np.array([np.sum(self._hin,axis=1)]*n).T
+      self._sftmx = sftmx  
+      self._hout = np.sum(-np.log(self._sftmx), axis=1)/n 
+      pred = np.argmax(-np.log(self._sftmx),axis=0)
+      self._y = y 
+      self._preds = pred 
+      temp = pred == y 
+      self._error = 1 - np.sum(temp[0])/n
+      
+    def backward(self):
+      dhin_w = self._hin_layer._dhout_w
+      dhin_b = self._hin_layer._dhout_b 
+      dh_in = self._sftmx*(1-self._sftmx)  
+      self._dl_dh = self._y*dh_in.T
+      d = np.shape(self._hin_layer._dhout_w)[2]
+      dl_dw = [] 
+      for i in range(d): 
+        dl_dw.append(self._hin_layer._dhout_w[:,:,i]*self._dl_dh)
+      self._dhout_w = np.array(dl_dw).T
+      self._dhout_b = self._dl_dh*self._hin_layer._dhout_b 
+\end{lstlisting} 
+
+
+
+
+
+\end{document}
