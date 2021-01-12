@@ -1,0 +1,127 @@
+\title{\textbf{Problem Set 5}}  
+\author{
+	Nima Leclerc (nleclerc@seas.upenn.edu, PennID = nleclerc)  \\
+	Collaborated with Abhinav R. \\ 
+        \\
+       ESE 546 (Principles of Deep Learning) \\ 
+       School of Engineering and Applied Science \\ University of Pennsylvania \\ 
+       Total time =  10
+        }
+\date{\today}
+
+
+\documentclass[12pt]{article}
+\usepackage{graphicx}
+\usepackage{sectsty}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{nccmath}
+\usepackage{bm}
+\usepackage{amssymb}
+\usepackage{color}
+\usepackage{bbm}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{green},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+
+
+\sectionfont{\fontsize{12}{15}\selectfont}
+\setlength{\parindent}{0pt}
+
+ 
+\begin{document}
+\maketitle
+
+
+\textbf{Problem 1:}  \newline 
+\emph{Solution:} \newline \newline 
+Provided the distributions $q(w)$ and $p(w)$, we have that $p(w)$ is given by 
+$$ p(w) = \frac{e^{-\beta \Phi (w)  } }{Z (\beta)  }  $$
+the quantity $(q || p) $ can be used to solve the variational inference problem. Hence, we can first expand out this KL-divergence.  
+$$ KL(q || p) =\sum_{w \in W} q(w) \log \frac{q(w)}{ p(w)}   =  \sum_{w \in W} q(w) \log \frac{q(w)}{ \frac{e^{-\beta \Phi (w)  } }{Z (\beta)  }   }   $$
+$$ =  \sum_{w \in W} q(w)  [  \log  q(w)  -   (\log e^{-\beta \Phi (w)  }  - \log Z )     ]    $$
+$$ =  \sum_{w \in W}   (q(w)   \log  q(w)   +    q(w) \log Z)    + \beta   \sum_{w \in W}   q(w)  \Phi (w) $$
+$$  = \beta   \sum_{w \in W}   q(w)  \Phi (w)   +   \sum_{w \in W}   q(w)  \log q(w)  + \log Z (\beta)\sum_{w \in W} q(w)     $$
+$$  = \beta   \sum_{w \in W}   q(w)  \Phi (w)   +   \sum_{w \in W}   q(w)  \log q(w)  + \log Z (\beta)   $$
+Hence, we have arrived at our final expression for $ KL(q || p) $. \newline \newline 
+(b) We can now show that, 
+$$\mathbb{E}_{w \sim p(w) }  [\Phi (w)  ]  = - \frac{\partial \log Z(\beta )  }{ \partial \beta } $$
+We can write, 
+$$\mathbb{E}_{w \sim p(w) }  [\Phi (w)  ]  = \int_{w \in \mathcal{W} } \Phi (w)   p(w)  dw    $$ 
+$$ =   \int_{w \in \mathcal{W} } \Phi (w)    \frac{e^{-\beta \Phi (w)  } }{Z (\beta)  }   dw   = \frac{1}{Z} \int_{w \in \mathcal{W} } \Phi (w) e^{-\beta \Phi (w)  }   dw    $$
+We can now show that $ - \frac{\partial \log Z(\beta )  }{ \partial \beta } $ gives this expression above. We have that, 
+$$ Z (\beta )  =  \int_{w \in \mathcal{W} } e^{-\beta \Phi (w)  }   $$
+Hence,
+$$  \frac{\partial \log Z(\beta )  }{ \partial \beta }  =  \frac{\partial   }{ \partial \beta }  \log    \int_{w \in \mathcal{W} } e^{-\beta \Phi (w)  } dw $$
+$$ =  ( \int_{w \in \mathcal{W} } e^{-\beta \Phi (w)  } dw  )^{-1}  \int_{w \in \mathcal{W} }  \frac{\partial   }{ \partial \beta } e^{-\beta \Phi (w)  } dw  $$
+$$ = -  \frac{1}{Z} \int_{w \in \mathcal{W} }  \Phi (w) e^{-\beta \Phi (w)  } dw   $$
+Hence, we get that  
+$$ \mathbb{E}_{w \sim p(w) }  [\Phi (w)  ]   = \frac{1}{Z} \int_{w \in \mathcal{W} }  \Phi (w) e^{-\beta \Phi (w)  } dw  = - \frac{\partial \log Z(\beta )  }{ \partial \beta }    $$
+So, 
+$$\mathbb{E}_{w \sim p(w) }  [\Phi (w)  ]  = - \frac{\partial \log Z(\beta )  }{ \partial \beta } $$
+\newline \newline 
+(c) Given that, 
+$$\mathcal{Q}_{2} = \{ q(w): q(w) = \prod_{i=1}^{N}  q  (w_{i} )   \}   $$
+with data generated from, 
+$$ p(w) \propto 1 - \prod_{i =1}^{N} w_{i}  $$
+we can now find the minimizer, 
+$$ q^{\star} = \min_{ q \in \mathcal{Q}_{2}  } KL (q|| p )  $$
+We can first write out our expression for $KL (q|| p )$.  
+$$ KL (q|| p )  = \sum_{w \in W} q(w) \log \frac{q(w)}{ p(w)}   =  \sum_{w \in W} \prod_{i=1}^{N}  q (w_{i} )  \log \frac{\prod_{i=1}^{N}  q (w_{i} )   }{ p (w)  }   $$
+$$ =     \prod_{i=1}^{N}  q(w_{i} = 1)  \log \frac{\prod_{i=1}^{N}  q (w_{i} =1 )   }{ p (w = 1)  }    +     \prod_{i=1}^{N}  q(w_{i} =0 )  \log \frac{\prod_{i=1}^{N}  q (w_{i} = 0 )   }{ p (w = 0 )  }   $$
+$$ = q (w = 1)  \log \frac{ q (w =1 )   }{ p (w = 1)  } +   \sum_{w = 0 }  [\prod_{i=1}^{m}  q(w_{i} =0 )  \prod_{j=1}^{N-m}  q (w_{j} =0 ) \log   \frac{ \prod_{i=1}^{m}  q_{i} (w_{i} =0 )  \prod_{j=1}^{N-m}  q (w_{j} =0 )  }{ p (w = 1)  } ]  $$
+$$ = q (w = 1)  \log \frac{ q (w =1 )   }{ p (w = 1)  } $$
+$$+ (2^{N} -1) [\prod_{i=1}^{m}  q (w_{i} =0 )  \prod_{j=1}^{N-m}  q(w_{j} =1 ) \log   \frac{ \prod_{i=1}^{m}  q_{i} (w_{i} =1 )  \prod_{j=1}^{N-m}  q (w_{j} =0 )  }{ p (w = 1)  } ]  $$
+We have the necessary condition that $q_{i} (1) = 0$ and $q_{i} (0) = 1$. Hence, the above expression for the KL-divergence goes to 0 because of this necessary condition. The above reduces to zero, 
+$$q^{\star} = \prod_{i=1}^{N} ( 1 - w_{i} )   $$
+Hence, we do find that $q^{\star} (w)$  does not have a form similar to $p(w)$.  While the distributions look similar, they are indeed different distributions. \newline  \newline 
+(d) Given that,
+$$\mathcal{Q}_{1} = \{ q(w): q(w) = \prod_{i=1}^{N}  q_{i}  (w )   \}   $$ 
+we would like to solve the problem, 
+$$ q^{\star} = \min_{ q \in \mathcal{Q}_{1}  } KL (q|| p )  $$
+
+We can start with the general expression that was obtained in Bishop's textbook for $q_{j}^{\star}$. 
+$$\ln q_{j}^{\star}  (w_{j} ) = \mathbb{E}_{ i\neq j} [\ln p  ]   $$
+We  now compute the right-hand side provided that we know $p$.  
+$$ \mathbb{E}_{ i\neq j} [\ln p  ]  =  \ln  (\frac{1 }{ N} \sum_{j=1 }^{N} p(w_j)     )  $$
+$$ = \ln  (\frac{1 }{ N} \sum_{j=1 }^{N} (1 - \frac{ \prod_{ i\neq j = 1}^{N} w_{i}    }{ w_{j} }   )    ) $$
+$$ = \ln  ( \frac{N }{N } -  \frac{1 }{ N} \sum_{j=1 }^{N}  (1 - \frac{ \prod_{ i\neq j = 1}^{N} w_{i}    }{ w_{j} }   )    ) $$
+$$ =  \ln  ( 1 -  \frac{1 }{ N} \sum_{j=1 }^{N}  ( \frac{ \prod_{ i\neq j = 1}^{N} w_{i}    }{ w_{j} }   )    ) $$
+From our previous relation, we can exponentiate both sides to get $q_{j}^{\star}  (w_{j} )$. This gives,
+$$q_{j}^{\star}  (w_{j} ) = 1 -  \frac{1 }{ N} \sum_{j=1 }^{N}   \frac{ \prod_{ i\neq j = 1}^{N} w_{i}    }{ w_{j} }       $$
+Hence, the solution for $q^{\star}$ is given by
+$$ q^{\star} = \prod_{j=1}^{N} q_{j}^{\star}  = \prod_{j=1}^{N}   (1 -  \frac{1 }{ N} \sum_{j=1 }^{N}   \frac{ \prod_{ i\neq j = 1}^{N} w_{i}    }{ w_{j} })  $$
+Applying the proper normalization gives,
+$$  q^{\star} = \frac{ 1}{2^{N} -1 } \prod_{j=1}^{N}   (1 -  \frac{1 }{ N} \sum_{j=1 }^{N}   \frac{ \prod_{ i\neq j = 1}^{N} w_{i}    }{ w_{j} } ) $$
+
+\textbf{Problem 2:}  \newline 
+\emph{Solution:} \newline \newline 
+(a) Refer to attached Jupyter notebook. \newline 
+(b) Refer to attached Jupyter notebook.   \newline 
+(c) Refer to attached Jupyter notebook. \newline 
+(d) Refer to attached Jupyter notebook.   \newline 
+
+
+\end{document}
